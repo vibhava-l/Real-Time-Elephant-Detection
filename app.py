@@ -2,9 +2,13 @@ import gradio as gr
 import cv2
 from ultralytics import YOLO
 import torch
+import torch.serialization
 
 # Auto-detect GPU if available
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
+# Allow loading of custom YOLO model safely
+torch.serialization.add_safe_globals(["ultralytics.nn.tasks.DetectionModel"])
 
 # Modify this line to explicitly set `weights_only=False`
 model = YOLO("runs/detect/train6/weights/best.pt")
