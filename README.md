@@ -2,7 +2,7 @@
 title: TuskAlert Elephant Detection
 emoji: 🐘
 colorFrom: indigo
-colorTo: teal
+colorTo: green
 sdk: gradio
 sdk_version: "3.37.0"
 app_file: app.py
