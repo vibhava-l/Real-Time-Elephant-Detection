@@ -1,0 +1,20 @@
+# Exclude datasets, documents and large files
+*.csv
+*.zip
+Elephant Fence Monitoring with Computer Vision.docx
+data/
+incomplete_data/
+elephant_fence_env/
+*.mp4
+runs/
+
+# Exclude log files
+*.log
+
+# Exclude temporary files
+*.tmp 
+*.bak
+__pycache__/
+
+# Exclude model checkpoints
+*.ckpt elephant_fence_env/

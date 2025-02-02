@@ -1,0 +1,6 @@
+train: "F:/Real-Time-Elephant-Detection/incomplete_data/images/train"
+val: "F:/Real-Time-Elephant-Detection/incomplete_data/images/val"
+test: "F:/Real-Time-Elephant-Detection/incomplete_data/images/test"
+
+nc: 1  # number of classes (e.g. 'elephant')
+names: ['elephant']  # class names
