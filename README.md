@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ---
 title: TuskAlert Elephant Detection
 emoji: 🐘
@@ -155,4 +154,3 @@ For questions or collaboration, contact me at:
 📧 Email: [vibhava.leelaratna@gmail.com]
 
 🌍 GitHub: github.com/vibhava-l
->>>>>>> 6e60f07 (Removed large files and fixed history)
