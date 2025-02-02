@@ -1,5 +1,5 @@
-gradio
-ultralytics
+gradio==3.39.0
+ultralytics==8.0.20
 torch
 numpy
 cv2
