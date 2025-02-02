@@ -7,7 +7,7 @@ import torch
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Modify this line to explicitly set `weights_only=False`
-model = YOLO("runs/detect/train6/weights/best.pt", weights_only=False)
+model = YOLO("runs/detect/train6/weights/best.pt")
 
 def detect_objects(video_path):
     cap = cv2.VideoCapture(video_path)  # Open video file
