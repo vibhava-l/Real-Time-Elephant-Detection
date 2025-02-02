@@ -6,12 +6,14 @@ import torch
 # Auto-detect GPU if available
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Ensure the correct model loading format
+# Safe model loading
 try:
-    model = YOLO("runs/detect/train6/weights/best.pt")  # Default loading
-except:
-    print("⚠️ Error loading best.pt - Retrying with torch.load() ⚠️")
-    model = torch.load("runs/detect/train6/weights/best.pt", map_location="cpu")  # Fallback method
+    torch.serialization.add_safe_globals(["ultralytics.nn.tasks.DetectionModel"])
+    model = torch.load("runs/detect/train6/weights/best.pt", map_location="cpu", weights_only=True)
+    print("✅ Model loaded with PyTorch 2.6 safe mode")
+except Exception as e:
+    print(f"⚠️ Error loading best.pt: {e}")
+    model = YOLO("runs/detect/train6/weights/best.pt")  # Fallback YOLO loading
 
 def detect_objects(video_path):
     cap = cv2.VideoCapture(video_path)  # Open video file
