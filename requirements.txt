@@ -1,5 +1,5 @@
 gradio==3.40.0
 torch==2.0.1
-ultralytics==8.0.20
+ultralytics==8.0.134
 opencv-python
 numpy
