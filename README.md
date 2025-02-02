@@ -1,4 +1,14 @@
 <<<<<<< HEAD
+---
+title: TuskAlert Elephant Detection
+emoji: 🐘
+colorFrom: indigo
+colorTo: teal
+sdk: gradio
+sdk_version: "3.37.0"
+app_file: app.py
+pinned: false
+---
 # 🐘 TuskAlert: Real-Time Elephant Detection with YOLOv8
 A YOLO-based detection model to identify elephants near electric or natural fences. This model can be integrated with automated deterrents or local alert systems, helping to mitigate the human-elephant conflict in rural Sri Lanka **without harming elephants or damaging property**.
 
