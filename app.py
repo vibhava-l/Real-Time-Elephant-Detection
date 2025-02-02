@@ -6,20 +6,13 @@ import torch
 # Auto-detect GPU if available
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Safe model loading with PyTorch 2.6+
+# Safe Model Loading
 try:
-    torch.serialization.add_safe_globals(["ultralytics.nn.tasks.DetectionModel"])
-    model = torch.load("runs/detect/train6/weights/best.pt", map_location="cpu", weights_only=False)
-    print("✅ Model loaded with PyTorch safe mode")
+    model = YOLO("runs/detect/train6/weights/best.pt")  # Load YOLO model
+    print("✅ Model loaded successfully!")
 except Exception as e:
-    print(f"⚠️ Error loading best.pt: {e}")
-
-    try:
-        print("🔄 Retrying with YOLO model loader...")
-        model = YOLO("runs/detect/train6/weights/best.pt")  # Fallback YOLO loading
-    except Exception as e2:
-        print(f"❌ Fallback YOLO loading failed: {e2}")
-        model = None  # Prevent crash
+    print(f"❌ Model loading failed: {e}")
+    model = None  # Prevents app from crashing
 
 def detect_objects(video_path):
     if model is None:
@@ -44,10 +37,10 @@ def detect_objects(video_path):
     cap.release()
     return detections
 
-# Define Gradio UI
+# Fix the Gradio `Video` input issue
 iface = gr.Interface(
     fn=detect_objects,
-    inputs=gr.Video(type="filepath"),
+    inputs=gr.Video(format="mp4"),  # ✅ Corrected parameter
     outputs=gr.JSON(),
     title="🐘 TuskAlert: Real-Time Elephant Detection",
     description="Upload a video to detect elephants in real-time."
