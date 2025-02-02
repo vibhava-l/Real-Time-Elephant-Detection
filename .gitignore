@@ -9,6 +9,9 @@ elephant_fence_env/
 
 # Ignore runs/ but allow train6 weights
 runs/
+!runs/detect/
+!runs/detect/train6/
+!runs/detect/train6/weights/
 !runs/detect/train6/weights/best.pt
 
 # Exclude log files
