@@ -1,5 +1,5 @@
-gradio==3.39.0
-ultralytics==8.0.20
+gradio==3.40.0
 torch==2.0.1
+ultralytics==8.0.20
 opencv-python
 numpy
