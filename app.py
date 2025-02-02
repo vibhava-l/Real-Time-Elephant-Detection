@@ -6,9 +6,8 @@ import torch
 # Auto-detect GPU if available
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Add a context manager to allowlist the custom class
-with torch.serialization.safe_globals(["ultralytics.nn.tasks.DetectionModel"]):
-    model = YOLO("runs/detect/train6/weights/best.pt")
+# Modify this line to explicitly set `weights_only=False`
+model = YOLO("runs/detect/train6/weights/best.pt", weights_only=False)
 
 def detect_objects(video_path):
     cap = cv2.VideoCapture(video_path)  # Open video file
@@ -20,7 +19,7 @@ def detect_objects(video_path):
             break
 
         results = model(frame, device=device)  # Run YOLO on the frame
-
+        
         for r in results:
             for box in r.boxes:
                 x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
@@ -39,5 +38,5 @@ iface = gr.Interface(
     description="Upload a video to detect elephants and prevent conflicts in real-time."
 )
 
-# Launch the Gradio interface
+# Launch the Gradio interface (starts a local server to serve the app, or deploys it on Hugging Face if pushed)
 iface.launch()
