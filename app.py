@@ -6,43 +6,51 @@ import torch
 # Auto-detect GPU if available
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Safe model loading
+# Safe model loading with PyTorch 2.6+
 try:
     torch.serialization.add_safe_globals(["ultralytics.nn.tasks.DetectionModel"])
-    model = torch.load("runs/detect/train6/weights/best.pt", map_location="cpu", weights_only=True)
-    print("✅ Model loaded with PyTorch 2.6 safe mode")
+    model = torch.load("runs/detect/train6/weights/best.pt", map_location="cpu", weights_only=False)
+    print("✅ Model loaded with PyTorch safe mode")
 except Exception as e:
     print(f"⚠️ Error loading best.pt: {e}")
-    model = YOLO("runs/detect/train6/weights/best.pt")  # Fallback YOLO loading
+
+    try:
+        print("🔄 Retrying with YOLO model loader...")
+        model = YOLO("runs/detect/train6/weights/best.pt")  # Fallback YOLO loading
+    except Exception as e2:
+        print(f"❌ Fallback YOLO loading failed: {e2}")
+        model = None  # Prevent crash
 
 def detect_objects(video_path):
-    cap = cv2.VideoCapture(video_path)  # Open video file
-    detections = []  # Store detected objects
+    if model is None:
+        return "❌ Model failed to load. Check logs for details."
 
-    while cap.isOpened():  # Loop through video frames
+    cap = cv2.VideoCapture(video_path)
+    detections = []
+
+    while cap.isOpened():
         ret, frame = cap.read()
-        if not ret:  # If no frame is read, break the loop
+        if not ret:
             break
 
-        results = model(frame, device=device)  # Run YOLO on the frame
-        
+        results = model(frame, device=device)
+
         for r in results:
             for box in r.boxes:
-                x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
-                conf = box.conf[0].item()  # Confidence score
+                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                conf = box.conf[0].item()
                 detections.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2, "confidence": conf})
 
-    cap.release()  # Close the video file
+    cap.release()
     return detections
 
-# Define the Gradio interface
+# Define Gradio UI
 iface = gr.Interface(
-    fn=detect_objects,  # Function to be called when a user uploads a video
-    inputs=gr.Video(type="filepath"),  # Input: User uploads a video file from their system
-    outputs=gr.JSON(),  # Output: JSON containing detected elephant bounding boxes & confidence scores
+    fn=detect_objects,
+    inputs=gr.Video(type="filepath"),
+    outputs=gr.JSON(),
     title="🐘 TuskAlert: Real-Time Elephant Detection",
-    description="Upload a video to detect elephants and prevent conflicts in real-time."
+    description="Upload a video to detect elephants in real-time."
 )
 
-# Launch the Gradio interface (starts a local server to serve the app, or deploys it on Hugging Face if pushed)
 iface.launch()
