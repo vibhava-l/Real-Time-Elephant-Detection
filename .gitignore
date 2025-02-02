@@ -6,10 +6,9 @@ data/
 incomplete_data/
 elephant_fence_env/
 *.mp4
-runs/*
-!runs/detect/
-!runs/detect/train6/
-!runs/detect/train6/weights/
+
+# Ignore runs/ but allow train6 weights
+runs/
 !runs/detect/train6/weights/best.pt
 
 # Exclude log files
@@ -21,4 +20,5 @@ runs/*
 __pycache__/
 
 # Exclude model checkpoints
-*.ckpt elephant_fence_env/
+*.ckpt 
+elephant_fence_env/
