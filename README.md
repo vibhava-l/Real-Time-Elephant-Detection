@@ -9,14 +9,13 @@ app_file: app.py
 pinned: false
 ---
 # 🐘 TuskAlert: Real-Time Elephant Detection with YOLOv8
-A YOLO-based detection model to identify elephants near electric or natural fences. This model can be integrated with automated deterrents or local alert systems, helping to mitigate the human-elephant conflict in rural Sri Lanka **without harming elephants or damaging property**.
+A YOLOv8-based detection model for identifying elephants near electric or natural fences. This project aims to mitigate human-elephant conflicts in rural areas like Sri Lanka by providing a **non-intrusive, real-time alerting system**. The system leverages **Ultralytics YOLOv8** for object detection and integrates with Gradio to offer a user-friendly web interface.
 
 ## 🚀 Features
-- **Real-time object detection** using **YOLOv8**
-- Supports **both CPU & GPU inference**
-- **Auto-detects NVIDIA GPU** and runs on CUDA if available
-- **Logs detections & triggers alerts when elephants are detected**
-- **Works with videos, images, or live webcam feeds**
+- **Real-time Detection**: Detect elephants in uploaded video files or live camera feeds.
+- **Web Interface**: A clean and simple Gradio UI for video uploads and JSON-based output.
+- **Dynamic Inference Handling**: Supports both CPU & GPU execution for efficient inference.
+- **Extensive logging**: Errors and detections are logged for debugging and traceability.
 
 ---
 
@@ -33,110 +32,42 @@ A YOLO-based detection model to identify elephants near electric or natural fenc
    source elephant_fence_env/bin/activate  # On macOS/Linux
    elephant_fence_env\Scripts\activate  # On Windows
 
-4. **Install dependencies**
+3. **Install dependencies**
    ```bash
    pip install -r requirements.txt
 
-6. **Download and prepare the dataset**
-   * Download from the links in Dataset section (below) and place images in data/   
-   * Ensure labelled annotations (.xml or .txt) are in data/yolo_labels/ 
+---
 
-   NOTE: Only 329 images from the given datasets were used to train the model.
-
-7. **Run the model locally on a test video**
-   ```bash
-   python local_inference.py
-
-
-## 📖 Model Training
-
-This model was trained using YOLOv8 from Ultralytics.
-
-1. **Training the Model**
-   Run the following command to start training:
-   ```bash
-   python train.py --data data.yaml --epochs 50 --imgsz 640 --device auto
-
-2. **Training Results**
-   After training, the best model weights will be saved under:
-   ```bash
-   runs/detect/train/weights/best.pt
-
-## 🏃 Running Inference
-
-To detect elephants in images, run:
+## 🖥 Run the application locally**
+Launch the Gradio interface locally:
 ```bash
-python local_inference.py --source path/to/image.jpg
+python app.py
 ```
+By default, the app runs on http://locahost:7860. Open this URL in your browser to access the application.
 
-To run a video, modify local_inference.py:
-```bash
-video_stream = cv2.VideoCapture("path/to/video.mp4")
+## 🐘 Using the Gradio Interface
+
+1. Upload a video of the target area.
+2. The system will process the video to detect elephants.
+3. Results will be displayed in JSON format, listing bounding box coordinates and confidence scores for detected objects.
+
+Example Output:
+
 ```
-
-The output will be saved in the same directory as:
-* elephant_detected.jpg → Image with bounding boxes.
-* detection_log.txt → Log of detected timestamps.
-
-## 📊 Model Performance
-
-| Metric  | Value |
-| ------------- | ------------- |
-| mAP@50  | 93.4%  |
-| mAP@50-95  | 73.8%  |
-| Precision | 95.0% |
-| Recall | 88.7% |
-| Inference Speed | ~145ms per frame (CPU) |
-
-🚀 **With an NVIDIA GPU, inference is much faster (~30ms per frame)!**
-
-## 📚 Dataset
-This project uses the following Kaggle datasets:
-* Wild Elephant Dataset -- Download it [here](https://www.kaggle.com/datasets/gunarakulangr/sri-lankan-wild-elephant-dataset)
-* Asian vs African Elephants -- Download it [here](https://www.kaggle.com/datasets/vivmankar/asian-vs-african-elephant-image-classification)
-
-## 📜 Scripts
-
-The `scripts/` folder contains essential scripts for data preparation, training, and evaluation:
-
-| **Script** | **Description** | **Usage** |
-|------------|---------------|-----------|
-| **`labelled_image_filter.py`** | Moves labeled images into a separate folder for easier dataset handling | `python scripts/labelled_image_filter.py` |
-| **`xml_to_yolo.py`** | Converts `.xml` annotation labels (Pascal VOC) to YOLO format | `python scripts/xml_to_yolo.py` |
-| **`train_validation_test_split.py`** | Splits dataset into **training**, **validation**, and **test** sets | `python scripts/train_validation_test_split.py` |
-| **`model_perf_metrics.py`** | Evaluates model performance and prints **mAP, Precision, Recall** | `python scripts/model_perf_metrics.py` |
+[
+    {"x1": 34, "y1": 56, "x2": 123, "y2": 178, "confidence": 0.95},
+    {"x1": 223, "y1": 89, "x2": 289, "y2": 200, "confidence": 0.87}
+]
+```
 
 ---
 
-### **How to Use These Scripts**
+## 🧪 Testing
 
-1. **Filter Labelled Images**
-   Move only the labelled images into a dedicated folder:
-   ```bash
-   python scripts/labelled_image_filter.py
-   ```
-   This ensures only annotated images are used for training.
+To test locally:
 
-2. **Convert .xml labels to YOLO format**
-   Convert Pascal VOC XML annotations into the required YOLO format:
-   ```bash
-   python scripts/xml_to_yolo.py
-   ```
-   This makes YOLO training possible since it requires .txt labels.
-
-3. **Split Dataset into Train/Validation/Test**
-   Organise filtered images into training, validation, and test folders:
-   ```bash
-   python scripts/train_validation_test_split.py
-   ```
-   This ensures a proper dataset split for training.
-
-4. **Evaluate Model Performance**
-   After training, calculate model performance metrics:
-   ```bash
-   python scripts/model_perf_metrics.py
-   ```
-   This script outputs mAP (Mean Average Precision), Precision, Recall, and Inference Speed.
+* Ensure a valid best.pt model file is available in the runs/detect/train6/weights/ directory.
+* Upload a sample video via the Gradio interface and verify the detections.
 
 ## 🤝 Contributing
 
