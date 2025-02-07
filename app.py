@@ -4,6 +4,7 @@ from ultralytics import YOLO
 import torch
 import os
 import platform
+import subprocess
 
 try:
     from playsound import playsound
@@ -24,13 +25,13 @@ except Exception as e:
 
 # Function to play sound alert when elephant is detected
 def play_alert():
-    if PLAYSOUND_AVAILABLE:
-        playsound("alert_sound.mp3")  # Make sure this file exists in the directory
-    elif platform.system() == "Windows":
+    alert_file = "alert_sound.mp3"  # Ensure this file exists in repo
+    if platform.system() == "Windows":
         import winsound
-        winsound.Beep(1000, 500)  # Windows beep sound
+        winsound.PlaySound(alert_file, winsound.SND_FILENAME)
     else:
-        os.system("aplay /usr/share/sounds/alsa/Front_Center.wav")  # Linux fallback
+        # Use ffplay to play the sound on Linux (Hugging Face Spaces)
+        subprocess.Popen(["ffplay", "-nodisp", "-autoexit", alert_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 # Function to process video and detect elephants
 def detect_objects(video_path):
