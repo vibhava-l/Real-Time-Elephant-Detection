@@ -35,26 +35,16 @@ def play_alert():
         # Use ffplay to play the sound on Linux (Hugging Face Spaces)
         subprocess.Popen(["ffplay", "-nodisp", "-autoexit", alert_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-# Function to process video and detect elephants
+# Function to process video and detect elephants (Real-Time Streaming)
 def detect_objects(video_path):
     if model is None:
-        return "❌ Model failed to load. Check logs for details."
+        yield "❌ Model failed to load. Check logs for details.", None
 
     cap = cv2.VideoCapture(video_path)  # Open video file
     if not cap.isOpened():
-        return "❌ Could not open video file."
+        yield "❌ Could not open video file.", None
 
     detections = []  # Store detected objects
-
-    # Get video properties
-    fps = int(cap.get(cv2.CAP_PROP_FPS))  
-    width, height = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  
-
-    # Create temporary output video path
-    temp_dir = tempfile.gettempdir()
-    output_path = os.path.join(temp_dir, "output.mp4")
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")  
-    out = cv2.VideoWriter(output_path, fourcc, fps, (width // 2, height // 2))  # Reduce resolution for faster output
 
     frame_count = 0
     frame_skip = 5  # Process every 5th frame (5x speed-up)
@@ -74,8 +64,8 @@ def detect_objects(video_path):
                     conf = box.conf[0].item()  # Confidence score
 
                     # Scale coordinates back to original resolution
-                    x1, x2 = int(x1 * width / 320), int(x2 * width / 320)
-                    y1, y2 = int(y1 * height / 320), int(y2 * height / 320)
+                    x1, x2 = int(x1 * frame.shape[1] / 320), int(x2 * frame.shape[1] / 320)
+                    y1, y2 = int(y1 * frame.shape[0] / 320), int(y2 * frame.shape[0] / 320)
 
                     # Draw the bounding box and confidence score
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
@@ -88,20 +78,21 @@ def detect_objects(video_path):
                     if conf > 0.5:  # Adjust confidence threshold as needed
                         play_alert()
 
-        out.write(cv2.resize(frame, (width // 2, height // 2)))  # Save processed frame
-
         frame_count += 1
 
-    cap.release()
-    out.release()
+        # Convert frame to JPEG for streaming
+        _, buffer = cv2.imencode(".jpg", frame)
+        frame_bytes = buffer.tobytes()
 
-    return output_path, detections
+        yield frame_bytes, detections  # Yield each frame live
+
+    cap.release()
 
 # Define the Gradio interface
 iface = gr.Interface(
     fn=detect_objects,  # Function to be called when a user uploads a video
     inputs=gr.Video(label="Upload a video"),
-    outputs=[gr.Video(label="Processed Video"), gr.JSON(label="Detections Log")],
+    outputs=[gr.Image(label="Live Processed Video"), gr.JSON(label="Detections Log")],
     title="🐘 TuskAlert: Real-Time Elephant Detection",
     description="Upload a video to detect elephants and visualize detections in real-time. A beep sound will play when an elephant is detected."
 )
