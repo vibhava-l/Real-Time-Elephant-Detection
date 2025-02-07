@@ -4,4 +4,6 @@ ultralytics==8.0.134
 opencv-python
 numpy
 playsound==1.2.2
+gtts
+pydub
 ffmpeg
