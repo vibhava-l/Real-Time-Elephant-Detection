@@ -45,7 +45,6 @@ def detect_objects(video_path):
         yield "❌ Could not open video file.", None
 
     detections = []  # Store detected objects
-
     frame_count = 0
     frame_skip = 5  # Process every 5th frame (5x speed-up)
 
@@ -78,13 +77,12 @@ def detect_objects(video_path):
                     if conf > 0.5:  # Adjust confidence threshold as needed
                         play_alert()
 
+            # **✅ Convert frame to a file**
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+            cv2.imwrite(temp_file.name, frame)  # Save frame as a temporary image
+            yield temp_file.name, detections  # **Return file path, NOT bytes**
+
         frame_count += 1
-
-        # Convert frame to JPEG for streaming
-        _, buffer = cv2.imencode(".jpg", frame)
-        frame_bytes = buffer.tobytes()
-
-        yield frame_bytes, detections  # Yield each frame live
 
     cap.release()
 
