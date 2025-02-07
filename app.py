@@ -6,13 +6,10 @@ import os
 import platform
 import subprocess
 import tempfile
-
-# Try importing playsound for audio alerts
-try:
-    from playsound import playsound
-    PLAYSOUND_AVAILABLE = True
-except ImportError:
-    PLAYSOUND_AVAILABLE = False
+import time
+from pydub import AudioSegment
+from pydub.playback import play
+from gtts import gTTS
 
 # Auto-detect GPU if available
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -25,17 +22,29 @@ except Exception as e:
     print(f"❌ Model loading failed: {e}")
     model = None  # Prevents app from crashing
 
-# Function to play sound alert when elephant is detected
-def play_alert():
-    alert_file = "alert_sound.mp3"  # Ensure this file exists in repo
-    if platform.system() == "Windows":
-        import winsound
-        winsound.PlaySound(alert_file, winsound.SND_FILENAME)
-    else:
-        # Use ffplay to play the sound on Linux (Hugging Face Spaces)
-        subprocess.Popen(["ffplay", "-nodisp", "-autoexit", alert_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+# Function to play sound alert when elephant is detected (with cooldown)
+last_alert_time = 0  # Global variable for cooldown
 
-# Function to process video and detect elephants (Real-Time Streaming)
+def play_alert():
+    global last_alert_time
+    if time.time() - last_alert_time < 5:  # 5-second cooldown
+        return
+
+    last_alert_time = time.time()  # Update last alert time
+
+    try:
+        tts = gTTS("Elephant detected! Stay alert!", lang="en")
+        temp_audio = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+        tts.save(temp_audio.name)
+
+        sound = AudioSegment.from_file(temp_audio.name, format="mp3")
+        play(sound)
+        print("🔊 Elephant alert sounded!")
+
+    except Exception as e:
+        print(f"❌ Error generating alert: {e}")
+
+# Function to process video and detect elephants
 def detect_objects(video_path):
     if model is None:
         yield "❌ Model failed to load. Check logs for details.", None
@@ -53,7 +62,7 @@ def detect_objects(video_path):
         if not ret:
             break
 
-        if frame_count % frame_skip == 0:  # Skip frames for faster processing
+        if frame_count % frame_skip == 0:
             resized_frame = cv2.resize(frame, (320, 320))  # Resize for faster inference
             results = model(resized_frame, device=device)
 
@@ -77,7 +86,7 @@ def detect_objects(video_path):
                     if conf > 0.5:  # Adjust confidence threshold as needed
                         play_alert()
 
-            # **✅ Convert frame to a file**
+            # ✅ Convert frame to a file
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
             cv2.imwrite(temp_file.name, frame)  # Save frame as a temporary image
             yield temp_file.name, detections  # **Return file path, NOT bytes**
@@ -88,11 +97,11 @@ def detect_objects(video_path):
 
 # Define the Gradio interface
 iface = gr.Interface(
-    fn=detect_objects,  # Function to be called when a user uploads a video
+    fn=detect_objects,
     inputs=gr.Video(label="Upload a video"),
     outputs=[gr.Image(label="Live Processed Video"), gr.JSON(label="Detections Log")],
     title="🐘 TuskAlert: Real-Time Elephant Detection",
-    description="Upload a video to detect elephants and visualize detections in real-time. A beep sound will play when an elephant is detected."
+    description="Upload a video to detect elephants and visualize detections in real-time. A voice alert will play when an elephant is detected."
 )
 
 iface.launch()
