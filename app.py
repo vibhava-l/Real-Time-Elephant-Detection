@@ -2,6 +2,7 @@ import gradio as gr
 import cv2
 from ultralytics import YOLO
 import torch
+import tempfile
 
 # Auto-detect GPU if available
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -14,21 +15,18 @@ except Exception as e:
     print(f"❌ Model loading failed: {e}")
     model = None  # Prevents app from crashing
 
-# Function to process video and detect elephants
+# Function to process video and detect elephants (Real-Time Streaming with Alerts)
 def detect_objects(video_path):
     if model is None:
-        return "❌ Model failed to load. Check logs for details.", "", ""
+        yield "❌ Model failed to load. Check logs for details.", None, "❌ Model not loaded"
 
     cap = cv2.VideoCapture(video_path)  # Open video file
+    if not cap.isOpened():
+        yield "❌ Could not open video file.", None, "❌ Video file error"
+
     detections = []  # Store detected objects
-    frame_list = []  # Store processed frames
-
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Define codec for saving video
-    output_path = "output.mp4"
-    fps = int(cap.get(cv2.CAP_PROP_FPS))  # Get FPS of input video
-    width, height = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # Get frame dimensions
-    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))  # Create output video file
-
+    frame_count = 0
+    frame_skip = 5  # Process every 5th frame for faster inference
     alert_message = "No elephants detected."  # Default alert message
 
     while cap.isOpened():
@@ -36,41 +34,54 @@ def detect_objects(video_path):
         if not ret:
             break
 
-        results = model(frame, device=device)  # Run YOLO model on each frame
-        elephant_detected = False  # Track if an elephant was found in this frame
+        if frame_count % frame_skip == 0:  # Skip frames for faster processing
+            resized_frame = cv2.resize(frame, (320, 320))  # Resize for speed
+            results = model(resized_frame, device=device)
 
-        for r in results:
-            for box in r.boxes:
-                x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
-                conf = box.conf[0].item()  # Confidence score
+            elephant_detected = False  # Track if an elephant was found in this frame
 
-                # Draw the bounding box and confidence score
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(frame, f"{conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            for r in results:
+                for box in r.boxes:
+                    x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
+                    conf = box.conf[0].item()  # Confidence score
 
-                # Store detection details
-                detections.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2, "confidence": conf})
+                    # Scale coordinates back to original resolution
+                    x1, x2 = int(x1 * frame.shape[1] / 320), int(x2 * frame.shape[1] / 320)
+                    y1, y2 = int(y1 * frame.shape[0] / 320), int(y2 * frame.shape[0] / 320)
 
-                # Update alert message if an elephant is detected
-                if conf > 0.5:  # Adjust confidence threshold as needed
-                    elephant_detected = True
+                    # Draw the bounding box and confidence score
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                    cv2.putText(frame, f"{conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        if elephant_detected:
-            alert_message = "🚨 Elephant detected! Stay alert!"
+                    # Store detection details
+                    detections.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2, "confidence": conf})
+
+                    # Update alert message when an elephant is detected
+                    if conf > 0.5:  # Adjust confidence threshold as needed
+                        elephant_detected = True
+
+            if elephant_detected:
+                alert_message = "🚨 Elephant detected! Stay alert!"
+            else:
+                alert_message = "No elephants detected."
+
+            # **✅ Convert frame to a file**
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+            cv2.imwrite(temp_file.name, frame)  # Save frame as a temporary image
+            yield temp_file.name, detections, alert_message  # **Return file path, NOT bytes**
+
+        frame_count += 1
 
     cap.release()
-    out.release()
-
-    return output_path, detections, alert_message  # Return updated alert message
 
 # Define the Gradio interface
 iface = gr.Interface(
     fn=detect_objects,  # Function to be called when a user uploads a video
     inputs=gr.Video(label="Upload a video"),
     outputs=[
-        gr.Video(label="Processed Video"),
+        gr.Image(label="Live Processed Video"),
         gr.JSON(label="Detections Log"),
-        gr.Textbox(label="Elephant Alert", interactive=False),  # Display alert messages
+        gr.Textbox(label="Elephant Alert", interactive=False),  # Live alert message
     ],
     title="🐘 TuskAlert: Real-Time Elephant Detection",
     description="Upload a video to detect elephants and visualize detections in real-time. Alerts will display when elephants are detected.",
