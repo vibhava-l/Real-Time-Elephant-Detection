@@ -2,7 +2,6 @@ import gradio as gr
 import cv2
 from ultralytics import YOLO
 import torch
-import winsound
 import os
 import platform
 from playsound import playsound
@@ -21,6 +20,7 @@ except Exception as e:
 # Cross-platform beep sound
 def play_alert():
     if platform.system() == "Windows":
+        import winsound
         winsound.Beep(1000, 500)
     else:
         os.system("play -nq -t alsa synth 0.5 sine 1000")  # Linux beep sound
