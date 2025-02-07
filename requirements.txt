@@ -3,4 +3,3 @@ torch==2.0.1
 ultralytics==8.0.134
 opencv-python
 numpy
-winsound
