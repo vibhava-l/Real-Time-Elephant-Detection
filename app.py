@@ -5,7 +5,9 @@ import torch
 import os
 import platform
 import subprocess
+import tempfile
 
+# Try importing playsound for audio alerts
 try:
     from playsound import playsound
     PLAYSOUND_AVAILABLE = True
@@ -39,37 +41,56 @@ def detect_objects(video_path):
         return "❌ Model failed to load. Check logs for details."
 
     cap = cv2.VideoCapture(video_path)  # Open video file
-    detections = []  # Store detected objects
-    frame_list = []  # Store processed frames
+    if not cap.isOpened():
+        return "❌ Could not open video file."
 
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Define codec for saving video
-    output_path = "output.mp4"
-    fps = int(cap.get(cv2.CAP_PROP_FPS))  # Get FPS of input video
-    width, height = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  # Get frame dimensions
-    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))  # Create output video file
+    detections = []  # Store detected objects
+
+    # Get video properties
+    fps = int(cap.get(cv2.CAP_PROP_FPS))  
+    width, height = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))  
+
+    # Create temporary output video path
+    temp_dir = tempfile.gettempdir()
+    output_path = os.path.join(temp_dir, "output.mp4")
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")  
+    out = cv2.VideoWriter(output_path, fourcc, fps, (width // 2, height // 2))  # Reduce resolution for faster output
+
+    frame_count = 0
+    frame_skip = 5  # Process every 5th frame (5x speed-up)
 
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
 
-        results = model(frame, device=device)  # Run YOLO model on each frame
+        if frame_count % frame_skip == 0:  # Skip frames for faster processing
+            resized_frame = cv2.resize(frame, (320, 320))  # Resize for faster inference
+            results = model(resized_frame, device=device)
 
-        for r in results:
-            for box in r.boxes:
-                x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
-                conf = box.conf[0].item()  # Confidence score
+            for r in results:
+                for box in r.boxes:
+                    x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
+                    conf = box.conf[0].item()  # Confidence score
 
-                # Draw the bounding box and confidence score
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(frame, f"{conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                    # Scale coordinates back to original resolution
+                    x1, x2 = int(x1 * width / 320), int(x2 * width / 320)
+                    y1, y2 = int(y1 * height / 320), int(y2 * height / 320)
 
-                # Store detection details
-                detections.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2, "confidence": conf})
+                    # Draw the bounding box and confidence score
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                    cv2.putText(frame, f"{conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-                # Play beep sound when elephant is detected
-                if conf > 0.5:  # Adjust confidence threshold as needed
-                    play_alert()
+                    # Store detection details
+                    detections.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2, "confidence": conf})
+
+                    # Play beep sound when elephant is detected
+                    if conf > 0.5:  # Adjust confidence threshold as needed
+                        play_alert()
+
+        out.write(cv2.resize(frame, (width // 2, height // 2)))  # Save processed frame
+
+        frame_count += 1
 
     cap.release()
     out.release()
