@@ -4,7 +4,12 @@ from ultralytics import YOLO
 import torch
 import os
 import platform
-from playsound import playsound
+
+try:
+    from playsound import playsound
+    PLAYSOUND_AVAILABLE = True
+except ImportError:
+    PLAYSOUND_AVAILABLE = False
 
 # Auto-detect GPU if available
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -17,14 +22,17 @@ except Exception as e:
     print(f"❌ Model loading failed: {e}")
     model = None  # Prevents app from crashing
 
-# Cross-platform beep sound
+# Function to play sound alert when elephant is detected
 def play_alert():
-    if platform.system() == "Windows":
+    if PLAYSOUND_AVAILABLE:
+        playsound("alert_sound.mp3")  # Make sure this file exists in the directory
+    elif platform.system() == "Windows":
         import winsound
-        winsound.Beep(1000, 500)
+        winsound.Beep(1000, 500)  # Windows beep sound
     else:
-        os.system("play -nq -t alsa synth 0.5 sine 1000")  # Linux beep sound
+        os.system("aplay /usr/share/sounds/alsa/Front_Center.wav")  # Linux fallback
 
+# Function to process video and detect elephants
 def detect_objects(video_path):
     if model is None:
         return "❌ Model failed to load. Check logs for details."
