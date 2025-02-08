@@ -87,4 +87,5 @@ iface = gr.Interface(
     description="Upload a video to detect elephants and visualize detections in real-time. Alerts will display when elephants are detected.",
 )
 
+iface.queue()  # Enable queuing system
 iface.launch()
