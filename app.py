@@ -68,7 +68,7 @@ def detect_objects(video_path):
             # **✅ Convert frame to a file**
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
             cv2.imwrite(temp_file.name, frame)  # Save frame as a temporary image
-            yield temp_file.name, detections, alert_message  # **Return file path, NOT bytes**
+            yield temp_file.name, alert_message, detections  # **Return file path, NOT bytes**
 
         frame_count += 1
 
