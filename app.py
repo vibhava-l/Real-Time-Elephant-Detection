@@ -80,8 +80,8 @@ iface = gr.Interface(
     inputs=gr.Video(label="Upload a video"),
     outputs=[
         gr.Image(label="Live Processed Video"),
-        gr.JSON(label="Detections Log"),
         gr.Textbox(label="Elephant Alert", interactive=False),  # Live alert message
+        gr.JSON(label="Detections Log"),
     ],
     title="🐘 TuskAlert: Real-Time Elephant Detection",
     description="Upload a video to detect elephants and visualize detections in real-time. Alerts will display when elephants are detected.",
