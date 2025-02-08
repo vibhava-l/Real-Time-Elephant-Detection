@@ -35,7 +35,7 @@ def detect_objects(video_path):
     if model is None:
         yield "❌ Model failed to load. Check logs for details.", None, "❌ Model not loaded"
 
-    # Preprocess Video for Fast Processing
+    # **Preprocess Video for Fast Processing**
     video_path = preprocess_video(video_path)
 
     cap = cv2.VideoCapture(video_path)
@@ -44,38 +44,45 @@ def detect_objects(video_path):
 
     detections = []
     frame_count = 0
-    frame_skip = 10
+    frame_skip = 15 
     resize_dim = (224, 224)
 
     while cap.isOpened():
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_count)  # Force read next frame
         ret, frame = cap.read()
+
         if not ret:
-            print("⚠️ Skipping a corrupt frame.")
-            continue  # Skip broken frame
+            print(f"⚠️ Skipping a corrupt frame at {frame_count}.")
+            frame_count += 1
+            continue  # Skip corrupt frame safely
 
-        if frame_count % frame_skip == 0:
-            resized_frame = cv2.resize(frame, resize_dim)
-            results = model([resized_frame], device=device)  # Batch Processing for faster inference
+        try:
+            if frame_count % frame_skip == 0:
+                resized_frame = cv2.resize(frame, resize_dim)
+                results = model([resized_frame], device=device)
 
-            for r in results:
-                for box in r.boxes:
-                    x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
-                    conf = box.conf[0].item()  # Confidence score
+                for r in results:
+                    for box in r.boxes:
+                        x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
+                        conf = box.conf[0].item()  # Confidence score
 
-                    # Scale back to original resolution
-                    x1, x2 = int(x1 * frame.shape[1] / resize_dim[0]), int(x2 * frame.shape[1] / resize_dim[0])
-                    y1, y2 = int(y1 * frame.shape[0] / resize_dim[1]), int(y2 * frame.shape[0] / resize_dim[1])
+                        # Scale back to original resolution
+                        x1, x2 = int(x1 * frame.shape[1] / resize_dim[0]), int(x2 * frame.shape[1] / resize_dim[0])
+                        y1, y2 = int(y1 * frame.shape[0] / resize_dim[1]), int(y2 * frame.shape[0] / resize_dim[1])
 
-                    # Draw bounding box & confidence
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                    cv2.putText(frame, f"{conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                        # Draw bounding box & confidence
+                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                        cv2.putText(frame, f"{conf:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-                    detections.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2, "confidence": conf})
+                        detections.append({"x1": x1, "y1": y1, "x2": x2, "y2": y2, "confidence": conf})
 
-            # Save frame to temp file
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
-            cv2.imwrite(temp_file.name, frame)
-            yield temp_file.name, detections  # Faster frame updates
+                # Save frame to temp file
+                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+                cv2.imwrite(temp_file.name, frame)
+                yield temp_file.name, detections  # ✅ **Faster frame updates**
+
+        except Exception as e:
+            print(f"⚠️ Error processing frame {frame_count}: {e}")
 
         frame_count += 1
 
@@ -88,7 +95,7 @@ iface = gr.Interface(
     inputs=gr.Video(label="Upload a video"),
     outputs=[gr.Image(label="Live Processed Video"), gr.JSON(label="Detections Log")],
     title="🐘 TuskAlert: Ultra-Fast Elephant Detection",
-    description="Upload a video to detect elephants in real-time (optimized for speed)."
+    description="Upload a video to detect elephants in real-time (optimized for speed & stability)."
 )
 
 iface.launch()
