@@ -6,3 +6,4 @@ playsound==1.2.2
 gtts
 pydub
 ffmpeg
+torch>=2.6.0
