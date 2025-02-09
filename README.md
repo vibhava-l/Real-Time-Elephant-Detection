@@ -9,13 +9,14 @@ app_file: app.py
 pinned: false
 ---
 # 🐘 TuskAlert: Real-Time Elephant Detection with YOLOv8
-A YOLOv8-based detection model for identifying elephants near electric or natural fences. This project aims to mitigate human-elephant conflicts in rural areas like Sri Lanka by providing a **non-intrusive, real-time alerting system**. The system leverages **Ultralytics YOLOv8** for object detection and integrates with Gradio to offer a user-friendly web interface.
+TuskAlert is a **YOLOv8-based detection system** designed to **monitor elephant movement** near fences, reducing **human-elephant conflicts**. This project leverages **Ultralytics YOLOv8** for **real-time object detection** and integrates with **Gradio** to provide an easy-to-use web interface.
 
 ## 🚀 Features
-- **Real-time Detection**: Detect elephants in uploaded video files or live camera feeds.
-- **Web Interface**: A clean and simple Gradio UI for video uploads and JSON-based output.
-- **Dynamic Inference Handling**: Supports both CPU & GPU execution for efficient inference.
-- **Extensive logging**: Errors and detections are logged for debugging and traceability.
+- **Real-Time Detection** – Detect elephants in **uploaded videos** or **live camera feeds**.
+- **Web Interface** – A user-friendly **Gradio UI** for easy interaction.
+- **GPU & CPU Execution** – Supports **CUDA acceleration** for improved inference speed.
+- **Live Alerts** – Provides **real-time warnings** when elephants are detected.
+- **Scalable Deployment** – Hosted on **Hugging Face Spaces** for quick testing and **AWS EC2** for cloud deployment.
 
 ---
 
@@ -44,6 +45,52 @@ Launch the Gradio interface locally:
 python app.py
 ```
 By default, the app runs on http://locahost:7860. Open this URL in your browser to access the application.
+
+## 🚀 Deployment Options
+
+### 🤗 1. Hugging Face Spaces
+
+TuskAlert is deployed on Hugging Face Spaces for easy access.
+
+To deploy manually:
+
+```bash
+gradio deploy
+```
+
+✅ **Pros**:
+- Free hosting
+- No server setup required
+- Ideal for quick demos
+
+### ☁ 2. AWS EC2 Deployment
+
+For real-time processing and full control, deploy on an AWS EC2 instance.
+
+Steps:
+   1. Launch an EC2 instance (Ubuntu 20.04, t2.medium or higher).
+   2. SSH into the instance:
+      ```bash
+      ssh -i "your-key.pem" ubuntu@your-ec2-ip
+      ```
+   3. Clone the repository:
+      ```bash
+      git clone https://github.com/vibhava-l/TuskAlert-Elephant-Detection.git
+      cd TuskAlert-Elephant-Detection
+      ```
+   4. Set up the environment & run:
+      ```bash
+      python3 -m venv venv
+      source venv/bin/activate
+      pip install -r requirements.txt
+      python app.py
+      ```
+   5. Access the live app via Gradio's public link.
+
+✅ **Pros**:
+- Better performance for large-scale inference
+- More control over dependencies & environment
+- Scalable with AWS infrastructure
 
 ## 🐘 Using the Gradio Interface
 
