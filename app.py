@@ -88,4 +88,4 @@ iface = gr.Interface(
 )
 
 iface.queue()  # Enable queuing system
-iface.launch()
+iface.launch(share=True)  # Launch the interface with the sharing option enabled
