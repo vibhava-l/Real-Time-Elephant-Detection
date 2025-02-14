@@ -39,7 +39,7 @@ TuskAlert is a **YOLOv8-based detection system** designed to **monitor elephant 
 
 ---
 
-## 🖥 Run the application locally**
+## 🖥 Run the application locally
 Launch the Gradio interface locally:
 ```bash
 python app.py
